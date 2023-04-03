@@ -3,6 +3,8 @@ const dotenv = require("dotenv");
 const morgan = require("morgan");
 const dbConnection = require("./config/database");
 const categoryRoute = require("./routes/categoryRoute");
+const ApiError = require("./utils/apiError");
+const errorMiddleware = require("./middlewares/errorMiddlware");
 
 //Because the enviroment file is named config.env if it's
 //named .env you don't need this line
@@ -23,7 +25,23 @@ if (process.env.NODE_ENV === "development") {
 // Mount
 app.use("/api/v1/categories", categoryRoute);
 
+app.all("*", (req, res, next) => {
+  // send the error message to the error handling middleware for express errors
+  next(new ApiError("This page doesn't exist", 404));
+});
+// Error handling middleware from express
+app.use(errorMiddleware);
+
 const PORT = process.env.PORT || 8000;
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`App running on Port ${PORT}`);
+});
+
+// Events
+// event listener to the unhandled rejections that aren't related to express
+process.on("unhandledRejection", (err) => {
+  console.error(`UnhandledRejection Errors: ${err.name} | ${err.message}`);
+  server.close(() => {
+    process.exit(1);
+  });
 });
