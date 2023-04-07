@@ -4,6 +4,7 @@ const morgan = require("morgan");
 const dbConnection = require("./config/database");
 const categoryRoute = require("./routes/categoryRoute");
 const subCategoryRoute = require("./routes/subcategoryRoute");
+const brandRoute = require("./routes/brandRoute");
 const ApiError = require("./utils/apiError");
 const errorMiddleware = require("./middlewares/errorMiddlware");
 
@@ -26,6 +27,7 @@ if (process.env.NODE_ENV === "development") {
 // Mount
 app.use("/api/v1/categories", categoryRoute);
 app.use("/api/v1/subcategories", subCategoryRoute);
+app.use("/api/v1/brands", brandRoute);
 
 app.all("*", (req, res, next) => {
   // send the error message to the error handling middleware for express errors
