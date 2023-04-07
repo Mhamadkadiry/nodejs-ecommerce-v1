@@ -8,6 +8,8 @@ const {
   deleteCategory,
   updateSubCategory,
   deleteSubCategory,
+  setCategoryIdToBody,
+  createFilterObj,
 } = require("../services/subCategoryService");
 const {
   getSubCategoryValidator,
@@ -17,12 +19,15 @@ const {
   updateSubCategoryValidator,
   deleteSubCategoryValidator,
 } = require("../utils/validators/subCategoryValidator");
-const router = express.Router();
+
+// Mergeparams: allow us to access others params in the nested route
+// example: here we want to access categoryId from category router
+const router = express.Router({ mergeParams: true });
 
 router
   .route("/")
-  .post(createSubCategoryValidator, createSubCategory)
-  .get(getSubCategories);
+  .post(setCategoryIdToBody, createSubCategoryValidator, createSubCategory)
+  .get(createFilterObj, getSubCategories);
 router
   .route("/:id")
   .get(getSubCategoryValidator, getSubCategory)

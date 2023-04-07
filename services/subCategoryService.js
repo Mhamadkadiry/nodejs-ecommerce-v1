@@ -3,6 +3,15 @@ const asyncHandler = require("express-async-handler");
 const SubCategory = require("../models/SubCategory");
 const ApiError = require("../utils/apiError");
 
+exports.setCategoryIdToBody = (req, res, next) => {
+  //Nested route
+  if (!req.body.category) {
+    console.log("we're here");
+    req.body.category = req.params.categoryId;
+  }
+  next();
+};
+
 // @desc  Create subcategory
 // @route POST /api/v1/subcategories
 // @access Private
@@ -16,6 +25,12 @@ exports.createSubCategory = asyncHandler(async (req, res) => {
   res.status(201).json({ data: subCategory });
 });
 
+exports.createFilterObj = (req, res, next) => {
+  let filterObj = {};
+  if (req.params.categoryId) filterObj = { category: req.params.categoryId };
+  req.filterObj = filterObj;
+  next();
+};
 // @desc  List of subcategories
 // @route GET /api/v1/subcategories
 // @access Public
@@ -23,7 +38,11 @@ exports.getSubCategories = asyncHandler(async (req, res) => {
   const page = req.query.page * 1 || 1;
   const limit = req.query.limit * 1 || 5;
   const skip = (page - 1) * limit;
-  const subcategories = await SubCategory.find({}).skip(skip).limit(limit);
+
+  const subcategories = await SubCategory.find(req.filterObj)
+    .skip(skip)
+    .limit(limit);
+  // .populate({ path: "category", select: "name -_id" });
   res
     .status(200)
     .json({ results: subcategories.length, page, data: subcategories });
@@ -52,7 +71,6 @@ exports.updateSubCategory = asyncHandler(async (req, res, next) => {
     { name, slug: slugify(name), category },
     { new: true }
   );
-  console.log(subcategory);
   if (!subcategory) {
     return next(new ApiError("No subcategory found!", 404));
   }
