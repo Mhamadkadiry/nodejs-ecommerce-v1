@@ -6,6 +6,7 @@ const {
   createCategoryValidator,
 } = require("../utils/validators/categoryValidator");
 
+const subCategoryRoute = require("./subcategoryRoute");
 const {
   getCategories,
   createCategory,
@@ -15,6 +16,8 @@ const {
 } = require("../services/categoryService");
 
 const router = express.Router();
+
+router.use("/:categoryId/subcategories", subCategoryRoute);
 
 router
   .route("/")
