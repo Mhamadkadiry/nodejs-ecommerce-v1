@@ -1,5 +1,7 @@
 const { check } = require("express-validator");
 const validatorMiddleware = require("../../middlewares/validationMiddleware");
+const Category = require("../../models/Category");
+const SubCategory = require("../../models/SubCategory");
 
 exports.createProductValidator = [
   check("title")
@@ -48,8 +50,43 @@ exports.createProductValidator = [
     .notEmpty()
     .withMessage("Product must belong to a specific category!")
     .isMongoId()
-    .withMessage("Invalid ID format"),
-  check("subcateogry").optional().isMongoId().withMessage("Invalid ID format"),
+    .withMessage("Invalid ID format")
+    //checking if category exists in the database
+    .custom((categoryId) =>
+      Category.findById(categoryId).then((category) => {
+        if (!category) {
+          return Promise.reject(new Error("No category found for this ID!"));
+        }
+      })
+    ),
+  check("subcategory")
+    .optional()
+    .isMongoId()
+    .withMessage("Invalid ID format")
+    .custom((subCategoriesIds) =>
+      SubCategory.find({ _id: { $exists: true, $in: subCategoriesIds } }).then(
+        (result) => {
+          if (result.length < 1 || result.length != subCategoriesIds.length) {
+            return Promise.reject(new Error("Invalid subcategories IDs!"));
+          }
+        }
+      )
+    )
+    //check if the list of subcategories refer to the same category
+    .custom((value, { req }) =>
+      SubCategory.find({ category: req.body.category }).then(
+        (subcategories) => {
+          const subCategoriesIdsInDb = [];
+          subcategories.forEach((subcategory) => {
+            subCategoriesIdsInDb.push(subcategory._id.toString());
+          });
+          if (!value.every((v) => subCategoriesIdsInDb.includes(v)))
+            return Promise.reject(
+              new Error("subcategories don't belong to the same category!")
+            );
+        }
+      )
+    ),
   check("brand").optional().isMongoId().withMessage("Invalid ID format!"),
   check("ratingsAverage")
     .optional()
@@ -69,12 +106,32 @@ exports.createProductValidator = [
 
 exports.getProductValidator = [
   check("id").isMongoId().withMessage("Ivalid product ID!"),
+  validatorMiddleware,
 ];
 
 exports.updateProductValidator = [
   check("id").isMongoId().withMessage("Ivalid product ID!"),
+  check("price")
+    .optional()
+    .isNumeric()
+    .withMessage("Product price must be a number!")
+    .isLength({ max: 32 })
+    .withMessage("Too long price!"),
+  check("priceAfterDiscount")
+    .optional()
+    .toFloat()
+    .isNumeric()
+    .withMessage("Product price after discount must be a number!")
+    .custom((value, { req }) => {
+      if (req.body.price <= value) {
+        throw new Error("priceAfterDiscount must be lower than price!");
+      }
+      return true;
+    }),
+  validatorMiddleware,
 ];
 
 exports.deleteProductValidator = [
   check("id").isMongoId().withMessage("Ivalid product ID!"),
+  validatorMiddleware,
 ];
