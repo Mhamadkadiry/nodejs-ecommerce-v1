@@ -6,13 +6,22 @@ const ApiError = require("../utils/apiError");
 // @route GET /api/v1/products
 // @access Public
 exports.getProducts = asyncHandler(async (req, res) => {
+  //filtering
+  const queryStringObj = { ...req.query };
+  const excludedFields = ["page", "sort", "limit", "fields"];
+  excludedFields.forEach((field) => delete queryStringObj[field]);
+  //pagination
   const page = req.query.page * 1 || 1;
   const limit = req.query.limit * 1 || 5;
   const skip = (page - 1) * limit;
-  const products = await Product.find({})
+  // query building
+  const query = Product.find(queryStringObj)
     .skip(skip)
     .limit(limit)
     .populate({ path: "category", select: "name -_id" });
+  //execute query
+  const products = await query;
+
   res.status(200).json({ results: products.length, page, data: products });
 });
 
