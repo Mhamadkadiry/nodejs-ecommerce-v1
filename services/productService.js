@@ -2,27 +2,21 @@ const slugify = require("slugify");
 const asyncHandler = require("express-async-handler");
 const Product = require("../models/Product");
 const ApiError = require("../utils/apiError");
+const ApiFeatures = require("../utils/apiFeatures");
 // @desc  List of products
 // @route GET /api/v1/products
 // @access Public
 exports.getProducts = asyncHandler(async (req, res) => {
-  //filtering
-  const queryStringObj = { ...req.query };
-  const excludedFields = ["page", "sort", "limit", "fields"];
-  excludedFields.forEach((field) => delete queryStringObj[field]);
-  //pagination
-  const page = req.query.page * 1 || 1;
-  const limit = req.query.limit * 1 || 5;
-  const skip = (page - 1) * limit;
-  // query building
-  const query = Product.find(queryStringObj)
-    .skip(skip)
-    .limit(limit)
-    .populate({ path: "category", select: "name -_id" });
+  const apiFeatures = new ApiFeatures(Product.find(), req.query)
+    .paginate()
+    .filter()
+    .search()
+    .limitFields()
+    .sort();
   //execute query
-  const products = await query;
+  const products = await apiFeatures.mongooseQuery;
 
-  res.status(200).json({ results: products.length, page, data: products });
+  res.status(200).json({ results: products.length, data: products });
 });
 
 // @desc  Get specific product by id
