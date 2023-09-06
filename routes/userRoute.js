@@ -4,6 +4,7 @@ const {
   deleteUserValidator,
   updateUserValidator,
   createUserValidator,
+  changeUserPasswordValidator,
 } = require("../utils/validators/userValidator");
 const {
   getUsers,
@@ -18,7 +19,11 @@ const {
 const slugMiddleware = require("../middlewares/slugMiddleware");
 
 const router = express.Router();
-router.put("/changepassword/:id", changeUserPassword);
+router.put(
+  "/changepassword/:id",
+  changeUserPasswordValidator,
+  changeUserPassword
+);
 router
   .route("/")
   .get(getUsers)
