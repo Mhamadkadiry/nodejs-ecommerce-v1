@@ -1,11 +1,16 @@
+const path = require("path");
+
 const express = require("express");
 const dotenv = require("dotenv");
 const morgan = require("morgan");
 const dbConnection = require("./config/database");
+
 const categoryRoute = require("./routes/categoryRoute");
 const subCategoryRoute = require("./routes/subcategoryRoute");
 const brandRoute = require("./routes/brandRoute");
 const productRoute = require("./routes/productRoute");
+const userRoute = require("./routes/userRoute");
+
 const ApiError = require("./utils/apiError");
 const errorMiddleware = require("./middlewares/errorMiddlware");
 
@@ -20,6 +25,7 @@ dbConnection();
 const app = express();
 // Middlewares
 app.use(express.json());
+app.use(express.static(path.join(__dirname, "uploads")));
 if (process.env.NODE_ENV === "development") {
   app.use(morgan("dev"));
   console.log(`mode: ${process.env.NODE_ENV}`);
@@ -30,6 +36,7 @@ app.use("/api/v1/categories", categoryRoute);
 app.use("/api/v1/subcategories", subCategoryRoute);
 app.use("/api/v1/brands", brandRoute);
 app.use("/api/v1/products", productRoute);
+app.use("/api/v1/users", userRoute);
 
 app.all("*", (req, res, next) => {
   // send the error message to the error handling middleware for express errors

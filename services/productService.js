@@ -1,72 +1,68 @@
-const slugify = require("slugify");
-const asyncHandler = require("express-async-handler");
 const Product = require("../models/Product");
-const ApiError = require("../utils/apiError");
-const ApiFeatures = require("../utils/apiFeatures");
+const factory = require("./handlerFactory");
+const sharp = require("sharp");
+const { v4: uuidv4 } = require("uuid");
+const asyncHandler = require("express-async-handler");
+const { uploadMixOfImages } = require("../middlewares/uploadImageMiddleware");
+
+exports.uploadProductImages = uploadMixOfImages([
+  {
+    name: "imageCover",
+    maxCount: 1,
+  },
+  {
+    name: "images",
+    maxCount: 5,
+  },
+]);
+exports.resizeProductImages = asyncHandler(async (req, res, next) => {
+  //image cover processing
+  if (req.files.imageCover) {
+    const imageCoverFilename = `product-${uuidv4()}-${Date.now()}-cover.jpeg`;
+    await sharp(req.files.imageCover[0].buffer)
+      .resize(2000, 1300)
+      .toFormat("jpeg")
+      .jpeg({ quality: 95 })
+      .toFile(`uploads/products/${imageCoverFilename}`);
+    req.body.imageCover = imageCoverFilename;
+  }
+  if (req.files.images) {
+    req.body.images = [];
+    await Promise.all(
+      req.files.images.map(async (img) => {
+        const imageFilename = `product-${uuidv4()}-${Date.now()}.jpeg`;
+        await sharp(img.buffer)
+          .resize(2000, 1300)
+          .toFormat("jpeg")
+          .jpeg({ quality: 95 })
+          .toFile(`uploads/products/${imageFilename}`);
+        req.body.images.push(imageFilename);
+      })
+    );
+  }
+  next();
+});
 // @desc  List of products
 // @route GET /api/v1/products
 // @access Public
-exports.getProducts = asyncHandler(async (req, res) => {
-  const apiFeatures = new ApiFeatures(Product.find(), req.query)
-    .paginate()
-    .filter()
-    .search()
-    .limitFields()
-    .sort();
-  //execute query
-  const products = await apiFeatures.mongooseQuery;
-
-  res.status(200).json({ results: products.length, data: products });
-});
+exports.getProducts = factory.getAll(Product);
 
 // @desc  Get specific product by id
 // @route GET /api/v1/products/:id
 // @access Public
-exports.getProduct = asyncHandler(async (req, res, next) => {
-  const { id } = req.params;
-  const product = await Product.findById(id).populate({
-    path: "category",
-    select: "name -_id",
-  });
-  if (!product) {
-    return next(new ApiError("No product found!", 404));
-  }
-  res.status(200).json({ data: product });
-});
+exports.getProduct = factory.getOne(Product, "Product");
 
 // @desc  Create product
 // @route POST /api/v1/products
 // @access Private
-exports.createProduct = asyncHandler(async (req, res) => {
-  req.body.slug = slugify(req.body.title);
-  const product = await Product.create(req.body).then((product) =>
-    res.status(201).json({ data: product })
-  );
-});
+exports.createProduct = factory.createOne(Product);
 
 // @desc  Update specific product
 // @route POST /api/v1/products/:id
 // @access Private
-exports.updateProduct = asyncHandler(async (req, res, next) => {
-  const { id } = req.params;
-  if (req.body.title) req.body.slug = slugify(req.body.title);
-  const product = await Product.findOneAndUpdate({ _id: id }, req.body, {
-    new: true,
-  });
-  if (!product) {
-    return next(new ApiError("No product found!", 404));
-  }
-  res.status(200).json({ data: product });
-});
+exports.updateProduct = factory.updateOne(Product);
 
 // @desc  Delete specific product
 // @route Delete /api/v1/products/:id
 // @access Private
-exports.deleteProduct = asyncHandler(async (req, res, next) => {
-  const { id } = req.params;
-  const product = await Product.findOneAndDelete(id);
-  if (!product) {
-    return next(new ApiError("No product found!", 404));
-  }
-  res.status(204).json();
-});
+exports.deleteProduct = factory.deleteOne(Product);

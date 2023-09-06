@@ -13,7 +13,10 @@ const {
   getCategory,
   updateCategory,
   deleteCategory,
+  uploadCategoryImage,
+  resizeImage,
 } = require("../services/categoryService");
+const slugMiddleware = require("../middlewares/slugMiddleware");
 
 const router = express.Router();
 
@@ -22,10 +25,22 @@ router.use("/:categoryId/subcategories", subCategoryRoute);
 router
   .route("/")
   .get(getCategories)
-  .post(createCategoryValidator, createCategory);
+  .post(
+    uploadCategoryImage,
+    resizeImage,
+    createCategoryValidator,
+    slugMiddleware,
+    createCategory
+  );
 router
   .route("/:id")
   .get(getCategoryValidator, getCategory)
-  .put(updateCategoryValidator, updateCategory)
+  .put(
+    uploadCategoryImage,
+    resizeImage,
+    updateCategoryValidator,
+    slugMiddleware,
+    updateCategory
+  )
   .delete(deleteCategoryValidator, deleteCategory);
 module.exports = router;
