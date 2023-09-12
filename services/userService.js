@@ -69,6 +69,7 @@ exports.changeUserPassword = asyncHandler(async (req, res, next) => {
     req.params.id,
     {
       password: await bcrypt.hash(req.body.password, 12),
+      passwordChangedAt: Date.now(),
     },
     {
       new: true,
@@ -84,3 +85,11 @@ exports.changeUserPassword = asyncHandler(async (req, res, next) => {
 // @route Delete /api/v1/users/:id
 // @access Private
 exports.deleteUser = factory.deleteOne(User, "user");
+
+// @desc  Get logged user data
+// @route GET /api/v1/users/myprofile
+// @access Private/Protect
+exports.getLoggedUserData = asyncHandler(async (req, res, next) => {
+  req.params.id = req.user._id;
+  next();
+});

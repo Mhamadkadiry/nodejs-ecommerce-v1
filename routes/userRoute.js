@@ -15,15 +15,21 @@ const {
   uploadUserImage,
   resizeImage,
   changeUserPassword,
+  getLoggedUserData,
 } = require("../services/userService");
 const slugMiddleware = require("../middlewares/slugMiddleware");
+const authService = require("../services/authService");
 
 const router = express.Router();
-router.put(
-  "/changepassword/:id",
-  changeUserPasswordValidator,
-  changeUserPassword
-);
+router
+  .route("/getprofile")
+  .get(authService.protect, getLoggedUserData, getUser);
+
+router.use(authService.protect, authService.allowedTo("admin"));
+
+router
+  .route("/changepassword/:id")
+  .put(changeUserPasswordValidator, changeUserPassword);
 router
   .route("/")
   .get(getUsers)

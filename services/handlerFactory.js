@@ -46,7 +46,6 @@ exports.getOne = (Model) =>
     const { id } = req.params;
     const document = await Model.findById(id);
     if (!document) {
-      // res.status(404).json({ msg: "document Not found!" });
       return next(new ApiError("No document found!", 404));
     }
     res.status(200).json({ data: document });
