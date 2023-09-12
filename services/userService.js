@@ -94,7 +94,6 @@ exports.getLoggedUserData = asyncHandler(async (req, res, next) => {
   req.params.id = req.user._id;
   next();
 });
-
 // @desc  Update logged user password
 // @route GET /api/v1/users/updatemypassword
 // @access Private/Protect
@@ -112,4 +111,31 @@ exports.updateLoggedUserPassword = asyncHandler(async (req, res, next) => {
   const token = generateToken(user._id);
 
   res.status(200).json({ data: user, token });
+});
+// @desc  Update logged user data
+// @route GET /api/v1/users/updateprofile
+// @access Private/Protect
+exports.updateLoggedUserProfile = asyncHandler(async (req, res, next) => {
+  const updatedUser = await User.findByIdAndUpdate(
+    req.user._id,
+    {
+      name: req.body.name,
+      email: req.body.email,
+      phone: req.body.phone,
+    },
+    { new: true }
+  );
+
+  res.status(200).json({ data: updatedUser });
+});
+
+// @desc  Deactivate logged user
+// @route DELETE /api/v1/users/deleteaccount
+// @access Private/Protect
+exports.deleteLoggedUserAccount = asyncHandler(async (req, res, next) => {
+  await User.findByIdAndUpdate(req.user._id, {
+    active: false,
+  });
+
+  res.status(204).json({ status: "success" });
 });

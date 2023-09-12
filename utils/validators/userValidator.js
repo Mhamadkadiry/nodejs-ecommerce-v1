@@ -78,6 +78,26 @@ exports.updateUserValidator = [
   validationMiddleware,
 ];
 
+exports.updateLoggedUserValidator = [
+  check("name").optional(),
+  check("email")
+    .optional()
+    .isEmail()
+    .withMessage("Invalid Email Address!")
+    .custom((val) =>
+      User.findOne({ email: val }).then((user) => {
+        if (user) {
+          return Promise.reject(new Error("Email already exists!"));
+        }
+      })
+    ),
+  check("phone")
+    .optional()
+    .isMobilePhone("de-DE")
+    .withMessage("Invalid german phone number!"),
+  validationMiddleware,
+];
+
 exports.deleteUserValidator = [
   check("id").isMongoId().withMessage("Invalid User id!"),
   validationMiddleware,

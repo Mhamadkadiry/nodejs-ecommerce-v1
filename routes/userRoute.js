@@ -6,6 +6,7 @@ const {
   createUserValidator,
   changeUserPasswordValidator,
   changeLoggedUserPasswordValidator,
+  updateLoggedUserValidator,
 } = require("../utils/validators/userValidator");
 const {
   getUsers,
@@ -18,24 +19,28 @@ const {
   changeUserPassword,
   getLoggedUserData,
   updateLoggedUserPassword,
+  updateLoggedUserProfile,
+  deleteLoggedUserAccount,
 } = require("../services/userService");
 const slugMiddleware = require("../middlewares/slugMiddleware");
 const authService = require("../services/authService");
 
 const router = express.Router();
-router
-  .route("/getprofile")
-  .get(authService.protect, getLoggedUserData, getUser);
+router.use(authService.protect);
+
+router.route("/getprofile").get(getLoggedUserData, getUser);
 
 router
   .route("/changemypassword")
-  .put(
-    authService.protect,
-    changeLoggedUserPasswordValidator,
-    updateLoggedUserPassword
-  );
+  .put(changeLoggedUserPasswordValidator, updateLoggedUserPassword);
 
-router.use(authService.protect, authService.allowedTo("admin"));
+router
+  .route("/updateprofile")
+  .put(updateLoggedUserValidator, updateLoggedUserProfile);
+
+router.route("/deleteaccount").delete(deleteLoggedUserAccount);
+
+router.use(authService.allowedTo("admin"));
 
 router
   .route("/changepassword/:id")

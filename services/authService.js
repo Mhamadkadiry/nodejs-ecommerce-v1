@@ -53,6 +53,9 @@ exports.protect = asyncHandler(async (req, res, next) => {
   if (!currentUser) {
     return next(new ApiError("This account no longer exists!", 401));
   }
+  if (!currentUser.active) {
+    return next(new ApiError("This account is deactivated!", 401));
+  }
   if (currentUser.passwordChangedAt) {
     const passwordChangedTimestamp = parseInt(
       currentUser.passwordChangedAt.getTime() / 1000,
