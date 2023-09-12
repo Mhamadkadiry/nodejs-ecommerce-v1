@@ -113,3 +113,33 @@ exports.changeUserPasswordValidator = [
     }),
   validationMiddleware,
 ];
+
+exports.changeLoggedUserPasswordValidator = [
+  check("currentPassword")
+    .notEmpty()
+    .withMessage("Current password is required!"),
+  check("passwordConfirm")
+    .notEmpty()
+    .withMessage("Password confirmation is required!"),
+  check("password")
+    .notEmpty()
+    .withMessage("New password is required!")
+    .custom(async (val, { req }) => {
+      const user = await User.findById(req.user._id);
+      if (!user) {
+        throw new Error("There is no user for this id!");
+      }
+      const isCorrectPassword = await bcrypt.compare(
+        req.body.currentPassword,
+        user.password
+      );
+      if (!isCorrectPassword) {
+        throw new Error("Current password is incorrect!");
+      }
+      if (val !== req.body.passwordConfirm) {
+        throw new Error("Password and password confirmation doesn't match!");
+      }
+      return true;
+    }),
+  validationMiddleware,
+];

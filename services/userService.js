@@ -6,6 +6,7 @@ const bcrypt = require("bcryptjs");
 const { v4: uuidv4 } = require("uuid");
 const asyncHandler = require("express-async-handler");
 const { uploadSingleImage } = require("../middlewares/uploadImageMiddleware");
+const generateToken = require("../utils/generateToken");
 
 exports.uploadUserImage = uploadSingleImage("profileImg");
 
@@ -92,4 +93,23 @@ exports.deleteUser = factory.deleteOne(User, "user");
 exports.getLoggedUserData = asyncHandler(async (req, res, next) => {
   req.params.id = req.user._id;
   next();
+});
+
+// @desc  Update logged user password
+// @route GET /api/v1/users/updatemypassword
+// @access Private/Protect
+exports.updateLoggedUserPassword = asyncHandler(async (req, res, next) => {
+  const user = await User.findByIdAndUpdate(
+    req.user._id,
+    {
+      password: await bcrypt.hash(req.body.password, 12),
+      passwordChangedAt: Date.now(),
+    },
+    {
+      new: true,
+    }
+  );
+  const token = generateToken(user._id);
+
+  res.status(200).json({ data: user, token });
 });

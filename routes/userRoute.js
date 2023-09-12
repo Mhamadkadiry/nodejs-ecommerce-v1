@@ -5,6 +5,7 @@ const {
   updateUserValidator,
   createUserValidator,
   changeUserPasswordValidator,
+  changeLoggedUserPasswordValidator,
 } = require("../utils/validators/userValidator");
 const {
   getUsers,
@@ -16,6 +17,7 @@ const {
   resizeImage,
   changeUserPassword,
   getLoggedUserData,
+  updateLoggedUserPassword,
 } = require("../services/userService");
 const slugMiddleware = require("../middlewares/slugMiddleware");
 const authService = require("../services/authService");
@@ -24,6 +26,14 @@ const router = express.Router();
 router
   .route("/getprofile")
   .get(authService.protect, getLoggedUserData, getUser);
+
+router
+  .route("/changemypassword")
+  .put(
+    authService.protect,
+    changeLoggedUserPasswordValidator,
+    updateLoggedUserPassword
+  );
 
 router.use(authService.protect, authService.allowedTo("admin"));
 
