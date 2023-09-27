@@ -16,9 +16,11 @@ const {
 } = require("../services/productService");
 const slugMiddleware = require("../middlewares/slugMiddleware");
 const authService = require("../services/authService");
+const reviewRoute = require("../routes/reviewRoute");
 
 const router = express.Router();
 
+router.use("/:productId/reviews", reviewRoute);
 router
   .route("/")
   .get(getProducts)

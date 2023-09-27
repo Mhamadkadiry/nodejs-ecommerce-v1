@@ -9,6 +9,8 @@ exports.setCategoryIdToBody = (req, res, next) => {
   next();
 };
 
+//nestes route
+// GET /api/v1/categories/:categoryId/subcategories
 exports.createFilterObj = (req, res, next) => {
   //Nested route {getAll}
   let filterObj = {};

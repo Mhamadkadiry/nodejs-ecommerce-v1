@@ -20,6 +20,8 @@ exports.deleteOne = (Model, modelType) =>
     if (!document) {
       return next(new ApiError("No model found!", 404));
     }
+    // Trigger "deleteOne" event when delete document
+    document.deleteOne();
     res.status(204).json();
   });
 
@@ -31,6 +33,8 @@ exports.updateOne = (Model) =>
     if (!document) {
       return next(new ApiError("No model found!", 404));
     }
+    // Trigger "save" event when editing document
+    document.save();
     res.status(200).json({ data: document });
   });
 
@@ -41,10 +45,14 @@ exports.createOne = (Model) =>
     );
   });
 
-exports.getOne = (Model) =>
+exports.getOne = (Model, populationOpt) =>
   asyncHandler(async (req, res, next) => {
     const { id } = req.params;
-    const document = await Model.findById(id);
+    let query = Model.findById(id);
+    if (populationOpt) {
+      query = query.populate(populationOpt);
+    }
+    const document = await query;
     if (!document) {
       return next(new ApiError("No document found!", 404));
     }
@@ -58,7 +66,7 @@ exports.getAll = (Model, modelName) =>
       filter = req.filterObj;
     }
     const documentsCounts = await Model.countDocuments();
-    const apiFeatures = new ApiFeatures(Model.find(), req.query)
+    const apiFeatures = new ApiFeatures(Model.find(filter), req.query)
       .paginate(documentsCounts)
       .filter()
       .search(modelName)
