@@ -12,6 +12,8 @@ const productRoute = require("./routes/productRoute");
 const userRoute = require("./routes/userRoute");
 const authRoute = require("./routes/authRoute");
 const reviewRoute = require("./routes/reviewRoute");
+const wishlistRoute = require("./routes/wishlistRoute");
+const addressRoute = require("./routes/addressRoute");
 
 const ApiError = require("./utils/apiError");
 const errorMiddleware = require("./middlewares/errorMiddlware");
@@ -41,6 +43,8 @@ app.use("/api/v1/products", productRoute);
 app.use("/api/v1/users", userRoute);
 app.use("/api/v1/auth", authRoute);
 app.use("/api/v1/reviews", reviewRoute);
+app.use("/api/v1/wishlist", wishlistRoute);
+app.use("/api/v1/addresses", addressRoute);
 
 app.all("*", (req, res, next) => {
   // send the error message to the error handling middleware for express errors
