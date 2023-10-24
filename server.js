@@ -1,8 +1,10 @@
 const path = require("path");
+const dotenv = require("dotenv");
 
 const express = require("express");
-const dotenv = require("dotenv");
 const morgan = require("morgan");
+const cors = require("cors");
+const compression = require("compression");
 const dbConnection = require("./config/database");
 const mountRoutes = require("./routes");
 const ApiError = require("./utils/apiError");
@@ -17,6 +19,14 @@ dbConnection();
 
 // Express app
 const app = express();
+
+// Enable corshe
+app.use(cors());
+app.options("*", cors());
+
+// Compress all responses
+app.use(compression());
+
 // Middlewares
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "uploads")));
