@@ -9,6 +9,7 @@ const dbConnection = require("./config/database");
 const mountRoutes = require("./routes");
 const ApiError = require("./utils/apiError");
 const errorMiddleware = require("./middlewares/errorMiddlware");
+const { webhookCheckout } = require("./services/orderService");
 
 //Because the enviroment file is named config.env if it's
 //named .env you don't need this line
@@ -27,6 +28,12 @@ app.options("*", cors());
 // Compress all responses
 app.use(compression());
 
+// Checkout webhook
+app.post(
+  "/webhook-checkout",
+  express.raw({ type: "application/json" }),
+  webhookCheckout
+);
 // Middlewares
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "uploads")));
