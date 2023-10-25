@@ -6,6 +6,7 @@ const ApiError = require("../utils/apiError");
 const Order = require("../models/Order");
 const Cart = require("../models/Cart");
 const Product = require("../models/Product");
+const User = require("../models/User");
 
 // @desc create cash order
 // @route POST /api/v1/orders/:cartId
@@ -43,9 +44,8 @@ exports.createCashOrder = asyncHandler(async (req, res, next) => {
       },
     }));
     await Product.bulkWrite(bulkOption, {});
+    await Cart.findByIdAndDelete(req.params.cartId);
   }
-  // 5) clear cart
-  await Cart.findByIdAndDelete(req.params.cartId);
   res.status(201).json({ status: "success", data: order });
 });
 
@@ -130,6 +130,40 @@ exports.checkoutSession = asyncHandler(async (req, res, next) => {
   res.status(200).json({ status: "success", session });
 });
 
+const createCardOrder = async (session) => {
+  const cartId = session.client_reference_id;
+  const shippingAddress = session.metadata;
+  const orderPrice = session.amount_total / 100;
+
+  const cart = await Cart.findById(cartId);
+  const user = User.findOne({ email: session.customer_email });
+
+  const order = await Order.create({
+    user: user._id,
+    cartItems: cart.cartItems,
+    shippingAddress,
+    totalOrderPrice: orderPrice,
+    isPaid: true,
+    paidAt: Date.now(),
+    paymentMethodType: "card",
+  });
+
+  if (order) {
+    const bulkOption = cart.cartItems.map((item) => ({
+      updateOne: {
+        filter: {
+          _id: item.product,
+        },
+        update: {
+          $inc: { quantity: -item.quantity, sold: +item.quantity },
+        },
+      },
+    }));
+    await Product.bulkWrite(bulkOption, {});
+    await Cart.findByIdAndDelete(cartId);
+  }
+};
+
 exports.webhookCheckout = asyncHandler(async (req, res, next) => {
   const stripeClient = stripe(process.env.STRIPE_SECRET);
 
@@ -147,6 +181,8 @@ exports.webhookCheckout = asyncHandler(async (req, res, next) => {
     return res.status(400).send(`Webhook Error: ${err.message}`);
   }
   if (event.type === "checkout.session.completed") {
-    console.log("create order here");
+    createCardOrder(event.data.object);
   }
+
+  res.status(200).json({ status: true });
 });
