@@ -9,6 +9,7 @@ const sendEmail = require("../utils/sendEmail");
 const generateToken = require("../utils/generateToken");
 
 const User = require("../models/User");
+const { sanitizeUser } = require("../resources/sanitizeUser");
 
 const RESET_CODE_EXPIRATION_TIME = 10; //in minutes
 
@@ -23,7 +24,7 @@ exports.signup = asyncHandler(async (req, res, next) => {
   });
   const token = generateToken(user._id);
 
-  res.status(201).json({ data: user, token });
+  res.status(201).json({ data: sanitizeUser(user), token });
 });
 //   @desc Login
 //   @route POST /api/v1/auth/login
